@@ -64,23 +64,43 @@ with open('MSD-all-artist-release-title.txt') as f:
 import datetime
 
 import codecs
+
+
+################# command line args (from postproc_video.py)
+import sys
+# Default parameters
+skiptracks = 0
 outfile = 'MSD-to-WCD.txt'
+reportstep = 1000
+
+arg = 1
+while arg < len(sys.argv):
+    argkey = sys.argv[arg];
+    if argkey == '-skiptracks':
+        arg += 1
+        skiptracks = int(sys.argv[arg])
+    elif argkey == '-outfile':
+        arg += 1
+        outfile = sys.argv[arg]
+    elif argkey == '-reportstep':
+        arg += 1
+        reportstep = int(sys.argv[arg])
+    else:
+        print "Usage: ", sys.argv[0], " -skiptracks <num> -outfile <path> -reportstep <step>"
+        raise ValueError('Argument '+argkey+' unrecognized')
+    arg += 1
+
+
 t = '\t'
-nwrit = 0
+tracknum = 0
 with codecs.open(outfile, 'w', "utf-8") as f:
   for ar, al, ti, du, id in msditems:
     dar = ar.decode('utf-8')
     dal = al.decode('utf-8')
     dti = ti.decode('utf-8')
-    iar, ial, iti, idu, iid, iin = findinWCD(dar, dal, dti, float(du))
-    f.write(id + t + du + t + '%.2f'%idu + t + dar + t + dal + t + dti + t + iar + t + ial + t + iti + t + iid + t + iin + '\n')
-    nwrit += 1
-    if nwrit % 1000 == 0:
-      current_time = datetime.datetime.now().time()
-      print current_time.isoformat(), ": Written ", nwrit
-
-
-
-
-
-
+    if tracknum >= skiptracks:
+      iar, ial, iti, idu, iid, iin = findinWCD(dar, dal, dti, float(du))
+      f.write(id + t + du + t + '%.2f'%idu + t + dar + t + dal + t + dti + t + iar + t + ial + t + iti + t + iid + t + iin + '\n')
+    tracknum += 1
+    if tracknum > skiptracks and tracknum % reportstep == 0:
+      print datetime.datetime.now(), ": Wrote track # ", tracknum
