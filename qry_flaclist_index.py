@@ -31,12 +31,16 @@ tiparser = whoosh.qparser.QueryParser('title', index.schema)
 #    pprint.pprint(r)
 import re
 
+def normz(string):
+  # Normalize a string by mapping to lower case and mapping any non-alphanumerics to space
+  return re.sub('[^-A-Za-z0-9]',' ',string.lower())
+
 def findinWCD(artist, album, title, dur):
   # All query terms are reduced to alphanumerics and lower case
   # (avoid problems with underscores preventing fuzzy matches, and NOT being a reserved keyword)
-  arp = arparser.parse(re.sub('[^A-Za-z0-9]',' ',artist.lower()))
-  alp = alparser.parse(re.sub('[^A-Za-z0-9]',' ',album.lower()))
-  tip = tiparser.parse(re.sub('[^A-Za-z0-9]',' ',title.lower()))
+  arp = arparser.parse(normz(artist))
+  alp = alparser.parse(normz(album))
+  tip = tiparser.parse(normz(title))
   qry = whoosh.query.And([arp, alp, tip])
   results = search.search(qry)
   if len(results) == 0:

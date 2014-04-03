@@ -57,6 +57,10 @@ def extract_dur(title):
             dur = hms_to_sec(res.group(2))
     return title, dur
 
+def normz(string):
+  # Normalize a string by mapping to lower case and mapping any non-alphanumerics to space
+  return re.sub('[^-A-Za-z0-9]',' ',string.lower())
+
 #title = 'Ponyo (3:05)'
 #ti, du = extract_dur(title)
 #print ti, du
@@ -85,9 +89,9 @@ if fp != None:
             if goon:
                 if dur == '<missing>':
                     title, dur = extract_dur(title)
-                writer.add_document(artist=unicode(artist, encoding='utf-8'), 
-                                    album=unicode(album, encoding='utf-8'), 
-                                    title=unicode(title, encoding='utf-8'), 
+                writer.add_document(artist=unicode(normz(artist), encoding='utf-8'), 
+                                    album=unicode(normz(album), encoding='utf-8'), 
+                                    title=unicode(normz(title), encoding='utf-8'), 
                                     duration=float(dur), 
                                     iadir=unicode(iadir, encoding='utf-8'), 
                                     ianame=unicode(ianame, encoding='utf-8'))
