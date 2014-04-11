@@ -32,8 +32,16 @@ tiparser = whoosh.qparser.QueryParser('title', index.schema)
 import re
 
 def normz(string):
-  # Normalize a string by mapping to lower case and mapping any non-alphanumerics to space
-  return re.sub('[^-A-Za-z0-9]',' ',string.lower())
+  # Normalize a string by mapping to lower case and mapping many non-alphanumerics to space
+  # We don't map apostrophe ' or period . because they are often used in names.
+  # but we do map dash - to space since it's possibly inconsistent.
+  # braces [] become \[\] and backslash \ becomes \\\\ (four backslashes)
+  return re.sub('[-()\[\]!@#$%^&*_+={}:;"<>,/?|\\\\]',' ',string.lower())
+  # We used to map any non-alphanumeric-dash ( [^-A-Za-z0-9] ), but that ended up stripping all the accented characters - not good.
+
+def del_parend(string):
+  # Remove any sequences in string that are enclosed in parens/braces/brackets
+  return re.sub('[\(\[{][^)\]}]*[\)\]}]','_',string)
 
 def findinWCD(artist, album, title, dur):
   # All query terms are reduced to alphanumerics and lower case
@@ -41,13 +49,68 @@ def findinWCD(artist, album, title, dur):
   arp = arparser.parse(normz(artist))
   alp = alparser.parse(normz(album))
   tip = tiparser.parse(normz(title))
+  # Strategy: 
+  #  (1) Try match of all artist, album, title words
+  #  (2) If no hits, try just artist and title
+  #  (3) If no hits, try artist alone: do we get any hits?
+  #        If not, try deleting parenthesized terms from artist
+  #        then try deleting trailing words from artist name until there's only one left
+  #  (4) If no hits, try deleting any parenthesized terms from title
+  #  (5) In no hits, try deleting up to half the trailing words from title, one by one
+  # case (1)
   qry = whoosh.query.And([arp, alp, tip])
   results = search.search(qry)
   if len(results) == 0:
+    # case (2)
     qry = whoosh.query.And([arp, tip])
     results = search.search(qry)
+  if len(results) == 0:
+    # case (3)
+    qry = whoosh.query.And([arp])
+    results = search.search(qry)
+    if len(results) == 0:
+      # no matches at all for this artist name - start eroding it
+      # first, delete parenthesized terms
+      ndpartist = normz(del_parend(artist))
+      arp = arparser.parse(ndpartist)
+      qry = whoosh.query.And([arp])
+      results = search.search(qry)
+      if len(results) == 0:
+        # then delete words from end
+        narwords = filter(len, ndpartist.split(' '))
+        for i in range(len(narwords)-1):  # up to nwords - 1 (so just one left)
+          # drop i+1 words from end of artist
+          arp = arparser.parse(' '.join(narwords[:-(i+1)]))
+          qry = whoosh.query.And([arp])
+          results = search.search(qry)
+          # Stop as soon as we get any matches
+          if len(results) > 0:
+            break
+    # Now we have an artist name that matches something, try with title again
+    qry = whoosh.query.And([arp, tip])
+    results = search.search(qry)
+  if len(results) == 0:
+    # case (4)
+    ndptitle = normz(del_parend(title))
+    tip = tiparser.parse(ndptitle)
+    qry = whoosh.query.And([arp, tip])
+    results = search.search(qry)
+  if len(results) == 0:
+    # case (5)
+    # filter keeps only the nonempty results of the split
+    ntiwords = filter(len, ndptitle.split(' '))
+    # for i in range(len(ntiwords)/2):  # integer divide takes floor (rounds down)
+    for i in range(len(ntiwords)-1):  # up to nwords - 1 (so just one left)
+      # drop i+1 words from end of title
+      tip = tiparser.parse(' '.join(ntiwords[:-(i+1)]))
+      qry = whoosh.query.And([arp, tip])
+      results = search.search(qry)
+      # Stop as soon as we get any matches
+      if len(results) > 0:
+        break
+  # OK, we've done our best trying to find results
   bestr = None
-  bestddiff = 9999
+  bestddiff = 999999.0
   for i, r in enumerate(results):
     thisdiff = abs(r['duration'] - dur)
     if thisdiff < bestddiff:

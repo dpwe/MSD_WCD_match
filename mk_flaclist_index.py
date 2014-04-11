@@ -58,8 +58,12 @@ def extract_dur(title):
     return title, dur
 
 def normz(string):
-  # Normalize a string by mapping to lower case and mapping any non-alphanumerics to space
-  return re.sub('[^-A-Za-z0-9]',' ',string.lower())
+  # Normalize a string by mapping to lower case and mapping many non-alphanumerics to space
+  # We don't map apostrophe ' or period . because they are often used in names.
+  # but we do map dash - to space since it's possibly inconsistent.
+  # In the RE pattern, braces [] become \[\] and backslash \ becomes \\\\ (four backslashes).
+  return re.sub('[-()\[\]!@#$%^&*_+={}:;"<>,/?|\\\\]',' ',string.lower())
+  # We used to map any non-alphanumeric-dash ( [^-A-Za-z0-9] ), but that ended up stripping all the accented characters - not good.
 
 #title = 'Ponyo (3:05)'
 #ti, du = extract_dur(title)
