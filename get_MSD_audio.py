@@ -11,7 +11,7 @@ import os, subprocess
 lookupfile = "MSD-to-WCD-v3.txt"
 lookuppickle = "msd_to_wcd_dict.pickle"
 # Root of where files are downloaded (should be absolute) (must exist)
-audio_dir = "/Users/dpwe/projects/millionsong/audio"
+audio_dir = "/home/dpwe/audio"
 
 # global lookup dictionary
 msd_dict = {};
@@ -68,10 +68,16 @@ def MSD_audio_file(trid):
             # No, have to try and download
             # Build a list of values for "ia"
             iacmd = ["ia", "download", WCD_archive, WCD_path]
-            rcode = subprocess.check_call(iacmd, cwd=audio_dir)
+            # Ignore any errors coming out of ia
+            try:
+                rcode = subprocess.check_call(iacmd, cwd=audio_dir)
+            except:
+                print "*** error running "+" ".join(iacmd)
         # Is it there now?
         if not os.path.isfile(fname):
-            print trid+"->"+fname+" not found"
+            # WCD fnames contain weird non-ascii UTF-8 chars which print will reject (as does ia often)
+            fname_uni = unicode(fname, encoding='utf-8')
+            print trid+"->"+fname_uni+" not found"
             # Act like we never knew it
             fname = None
 
