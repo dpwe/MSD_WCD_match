@@ -65,10 +65,18 @@ def MSD_audio_file(trid):
         fname = os.path.join(audio_dir, WCD_archive, WCD_path)
         # Does it exist?
         if not os.path.isfile(fname):
+            # Maybe we have to update the WCD_archive name to updated value?
+            a_id = archive_id(WCD_archive)
+            if a_id in wcd_archive_map:
+                WCD_archive = wcd_archive_map[archive_id(a_id)]
+                fname = os.path.join(audio_dir, WCD_archive, WCD_path)
+                # Now try again
+        if not os.path.isfile(fname):
             # No, have to try and download
             # Build a list of values for "ia"
-            iacmd = ["ia", "download", WCD_archive, WCD_path]
-            # Ignore any errors coming out of ia
+                #iacmd = ["ia", "download", WCD_archive, WCD_path]
+            iacmd = ["/home/dpwe/MSD_WCD_match/ia_download", "download", WCD_archive, WCD_path]
+                # Ignore any errors coming out of ia
             try:
                 rcode = subprocess.check_call(iacmd, cwd=audio_dir)
             except:
@@ -100,3 +108,19 @@ else:
         pickle.dump(msd_dict, f)
     print "Constructed dict and saved to "+lookuppickle
 
+# Also have to build a map of past to current WCD archive names
+def archive_id(archive_name):
+    """ Return the numbers at the end of the item """
+    return archive_name[archive_name.rfind('_')+1:]
+
+# Turns out archive names have been fixed since I built the map
+# but the id numbers are the same, so I can translate
+wcd_item_list = 'what_cd-itemlist-2014-04-29.txt'
+wcd_archive_map = {}
+with open(wcd_item_list, 'r') as f:
+    for line in f:
+        archive_name = line.rstrip('\n')
+        id = archive_id(archive_name)
+        wcd_archive_map[id] = archive_name
+
+print len(wcd_archive_map.keys()), " items read from ", wcd_item_list

@@ -20,6 +20,7 @@ with open(os.path.join(midi_dir, 'Clean MIDIs-md5_to_path.pickle')) as f:
 with open(os.path.join(midi_dir, 'Clean MIDIs-md5_to_msd.pickle')) as f:
     md5_to_msd = pickle.load(f)
 
+found = 0
 count = 0
 for md5, msd_array in md5_to_msd.items():
     for msd_item in msd_array:
@@ -30,7 +31,9 @@ for md5, msd_array in md5_to_msd.items():
                 if md5 in md5_to_path:
                     midi_path = md5_to_path[md5]
                     audio_path = get_MSD_audio.MSD_audio_file(track_id)
-                    #align(midi_path, audio_path)
+                    if audio_path is not None:
+                        found += 1
+                        #align(midi_path, audio_path)
                     count += 1
 
-print count
+print "Found ", found, " of ", count
