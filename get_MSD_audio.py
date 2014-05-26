@@ -92,7 +92,7 @@ def MSD_audio_file(trid):
     return fname
 
 # Initialization
-import pickle
+import cPickle as pickle
 
 # Do we have the index pre-pickled?
 if os.path.isfile(lookuppickle):
@@ -105,7 +105,7 @@ else:
     msd_dict = build_msd_dict(lookupfile)
     # and write it out for next time
     with open(lookuppickle, 'w') as f:
-        pickle.dump(msd_dict, f)
+        pickle.dump(msd_dict, f, pickle.HIGHEST_PROTOCOL)
     print "Constructed dict and saved to "+lookuppickle
 
 # Also have to build a map of past to current WCD archive names
