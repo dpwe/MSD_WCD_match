@@ -38,13 +38,14 @@ for md5, msd_array in md5_to_msd.items():
                     if audio_path is not None:
                         found += 1
                         #align(midi_path, audio_path)
-                        output_midi_filename = os.path.join(output_root, midi_path)
+                        output_midi_filename = midi_path.replace(midi_dir, output_root)
                         output_dir = os.path.dirname(output_midi_filename)
                         if not os.path.exists(output_dir):
                             os.makedirs(output_dir)
+                        print "Aligning", audio_path, "to", midi_path, "writing", output_midi_filename
                         midi_alignment.align_one_file(audio_path, midi_path, output_midi_filename, output_diagnostics=True)
                     count += 1
-                    if count >= 10:
-                        raise ValueError
+                    #if count >= 10:
+                    #    raise ValueError
 
 print "Found ", found, " of ", count

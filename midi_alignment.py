@@ -139,6 +139,7 @@ def align_one_file(mp3_filename, midi_filename, output_midi_filename, output_dia
     plt.title('Similarity matrix and lowest-cost path, cost={}'.format(score))
     
     # Adjust MIDI timing
+    print np.shape(similarity_matrix)
     print len(p), np.max(p)
     print len(q), np.max(q)
     print len(midi_beats)
@@ -179,9 +180,10 @@ def align_one_file(mp3_filename, midi_filename, output_midi_filename, output_dia
                          '-i',
                          output_midi_filename.replace('.mid', '.wav'),
                          '-ab',
-                         '128k',
+                         '64k',
                          '-y',
-                         output_midi_filename.replace('.mid', '.mp3')])
+                         #output_midi_filename.replace('.mid', '.mp3')])
+                         output_midi_filename.replace('.mid', '.ogg')])
         # Remove temporary .wav file
         os.remove(output_midi_filename.replace('.mid', '.wav'))
         # Save a .mat of the results
