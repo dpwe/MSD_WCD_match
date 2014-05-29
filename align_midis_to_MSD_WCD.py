@@ -11,7 +11,11 @@ import pickle
 import get_MSD_audio
 import numpy as np
 
-midi_dir = '/home/dpwe/midis'
+# Colin's helper function
+import midi_alignment
+
+midi_dir = '/home/dpwe/midi'
+output_root = '/home/dpwe/midi_aligned'
 
 with open('msd_to_wcd_dict.pickle') as f:
     msd_to_wcd = pickle.load(f)
@@ -29,11 +33,18 @@ for md5, msd_array in md5_to_msd.items():
             dur_diff = np.abs(msd_to_wcd[track_id][2] - msd_to_wcd[track_id][3])
             if dur_diff < .5:
                 if md5 in md5_to_path:
-                    midi_path = md5_to_path[md5]
+                    midi_path = os.path.join(midi_dir, md5_to_path[md5])
                     audio_path = get_MSD_audio.MSD_audio_file(track_id)
                     if audio_path is not None:
                         found += 1
                         #align(midi_path, audio_path)
+                        output_midi_filename = os.path.join(output_root, midi_path)
+                        output_dir = os.path.dirname(output_midi_filename)
+                        if not os.path.exists(output_dir):
+                            os.makedirs(output_dir)
+                        midi_alignment.align_one_file(audio_path, midi_path, output_midi_filename, output_diagnostics=True)
                     count += 1
+                    if count >= 10:
+                        raise ValueError
 
 print "Found ", found, " of ", count
