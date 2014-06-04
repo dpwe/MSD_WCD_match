@@ -14,8 +14,8 @@ import numpy as np
 # Colin's helper function
 import midi_alignment
 
-midi_dir = '/home/dpwe/midi'
-output_root = '/home/dpwe/midi_aligned'
+midi_dir = '../midi'
+output_root = '../midi_aligned'
 
 with open('msd_to_wcd_dict.pickle') as f:
     msd_to_wcd = pickle.load(f)

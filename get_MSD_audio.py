@@ -11,7 +11,7 @@ import os, subprocess
 lookupfile = "MSD-to-WCD-v3.txt"
 lookuppickle = "msd_to_wcd_dict.pickle"
 # Root of where files are downloaded (should be absolute) (must exist)
-audio_dir = "/home/dpwe/audio"
+audio_dir = "../audio"
 
 # global lookup dictionary
 msd_dict = {};
@@ -93,6 +93,7 @@ def MSD_audio_file(trid):
 
 # Initialization
 import cPickle as pickle
+import gzip
 
 # Do we have the index pre-pickled?
 if os.path.isfile(lookuppickle):
