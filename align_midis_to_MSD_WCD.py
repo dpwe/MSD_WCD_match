@@ -14,8 +14,8 @@ import numpy as np
 # Colin's helper function
 import midi_alignment
 
-midi_dir = '/home/dpwe/midi'
-output_root = '/home/dpwe/midi_aligned'
+midi_dir = '../midi'
+output_root = '../midi_aligned'
 
 with open('msd_to_wcd_dict.pickle') as f:
     msd_to_wcd = pickle.load(f)
@@ -38,7 +38,8 @@ for md5, msd_array in md5_to_msd.items():
                     if audio_path is not None:
                         found += 1
                         #align(midi_path, audio_path)
-                        output_midi_filename = os.path.join(output_root, midi_path)
+                        #output_midi_filename = os.path.join(output_root, midi_path)
+                        output_midi_filename = midi_path.replace(midi_dir, output_root)
                         output_dir = os.path.dirname(output_midi_filename)
                         if not os.path.exists(output_dir):
                             os.makedirs(output_dir)
