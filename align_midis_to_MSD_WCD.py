@@ -24,9 +24,9 @@ with open(os.path.join(midi_dir, 'Clean MIDIs-md5_to_path.pickle')) as f:
 with open(os.path.join(midi_dir, 'Clean MIDIs-md5_to_msd.pickle')) as f:
     md5_to_msd = pickle.load(f)
 
-found = 0
-count = 0
-for md5, msd_array in md5_to_msd.items():
+import joblib
+
+def align_md5_to_MSDs(md5, msd_array):
     for msd_item in msd_array:
         track_id = msd_item[0]
         if track_id in msd_to_wcd:
@@ -36,16 +36,19 @@ for md5, msd_array in md5_to_msd.items():
                     midi_path = os.path.join(midi_dir, md5_to_path[md5])
                     audio_path = get_MSD_audio.MSD_audio_file(track_id)
                     if audio_path is not None:
-                        found += 1
-                        #align(midi_path, audio_path)
-                        output_midi_filename = midi_path.replace(midi_dir, output_root)
+                        audio_dir, audio_tail = os.path.split(audio_path)
+                        audio_stem, audio_ext = os.path.splitext(audio_tail)
+                        output_midi_filename = midi_path.replace(midi_dir, output_root).replace('.mid', '-'+audio_stem+'.mid')
                         output_dir = os.path.dirname(output_midi_filename)
                         if not os.path.exists(output_dir):
                             os.makedirs(output_dir)
-                        print "Aligning", audio_path, "to", midi_path, "writing", output_midi_filename
-                        midi_alignment.align_one_file(audio_path, midi_path, output_midi_filename, output_diagnostics=True)
-                    count += 1
-                    #if count >= 10:
-                    #    raise ValueError
+                        if os.path.isfile(output_midi_filename):
+                            print "Skipping -", output_midi_filename, "exists"
+                        else:
+                            print "Aligning", audio_path, "to", midi_path, "writing", output_midi_filename
+                            midi_alignment.align_one_file(audio_path, midi_path, output_midi_filename, output_diagnostics=True)
 
-print "Found ", found, " of ", count
+
+joblib.Parallel(n_jobs=4)(joblib.delayed(align_md5_to_MSDs)(md5, msd_array)
+                          for md5, msd_array in md5_to_msd.items())
+

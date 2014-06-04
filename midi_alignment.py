@@ -179,10 +179,10 @@ def align_one_file(mp3_filename, midi_filename, output_midi_filename, output_dia
         subprocess.check_output(['ffmpeg',
                          '-i',
                          output_midi_filename.replace('.mid', '.wav'),
-                         '-ab',
-                         '64k',
-                         '-y',
-                         #output_midi_filename.replace('.mid', '.mp3')])
+                         '-acodec',
+                         'libvorbis',
+                         '-aq',
+                         '0', 
                          output_midi_filename.replace('.mid', '.ogg')])
         # Remove temporary .wav file
         os.remove(output_midi_filename.replace('.mid', '.wav'))
