@@ -37,7 +37,58 @@ def build_msd_dict(lookupfile, dt_thresh=2.0):
                 new_msd_dict[TRid] = [WCD_archive, WCD_path, MSD_dur, WCD_dur]
     return new_msd_dict
 
-# Retrieve a file
+# Retrieve a file given IA names
+def IA_audio_file(WCD_archive, WCD_path):
+    """Return path to audio file corresponding to WCD item.  Will download it from archive if file not found locally.
+
+    :parameters:
+      - WCD_archive : string
+          name of the archive containing desired track
+
+      - WCD_path : string
+          path to the file within the archive
+
+    :returns:
+      - fname : string
+          full path to audio file, or None if no audio is available
+
+    :note:
+      Uses global ``audio_dir`` as root to download files into.
+    """
+    # Strip leading path off WCD_archive, we don't use it
+    arc_parts = WCD_archive.split('/')
+    WCD_archive = arc_parts[-1]
+    # Full target path
+    fname = os.path.join(audio_dir, WCD_archive, WCD_path)
+    # Does it exist?
+    if not os.path.isfile(fname):
+        # Maybe we have to update the WCD_archive name to updated value?
+        a_id = archive_id(WCD_archive)
+        if a_id in wcd_archive_map:
+            WCD_archive = wcd_archive_map[archive_id(a_id)]
+            fname = os.path.join(audio_dir, WCD_archive, WCD_path)
+    # Now try again
+    if not os.path.isfile(fname):
+        # No, have to try and download
+        # Build a list of values for "ia"
+        #iacmd = ["ia", "download", WCD_archive, WCD_path]
+        iacmd = ["/home/dpwe/MSD_WCD_match/ia_download", "download", WCD_archive, WCD_path]
+        # Ignore any errors coming out of ia
+        try:
+            rcode = subprocess.check_call(iacmd, cwd=audio_dir)
+        except:
+            print "*** error running "+" ".join(iacmd)
+    # Is it there now?
+    if not os.path.isfile(fname):
+        # WCD fnames contain weird non-ascii UTF-8 chars which print will reject (as does ia often)
+        fname_uni = unicode(fname, encoding='utf-8')
+        print trid+"->"+fname_uni+" not found"
+        # Act like we never knew it
+        fname = None
+
+    return fname
+
+# Retrieve a file given MSD tkid
 def MSD_audio_file(trid):
     """Return path to audio file corresponding to MSD item.  Will download it from archive if file not found locally.
 
@@ -58,37 +109,7 @@ def MSD_audio_file(trid):
     if trid in msd_dict:
         vals = msd_dict[trid]
         WCD_archive, WCD_path = vals[0:2]
-        # Strip leading path off WCD_archive, we don't use it
-        arc_parts = WCD_archive.split('/')
-        WCD_archive = arc_parts[-1]
-        # Full target path
-        fname = os.path.join(audio_dir, WCD_archive, WCD_path)
-        # Does it exist?
-        if not os.path.isfile(fname):
-            # Maybe we have to update the WCD_archive name to updated value?
-            a_id = archive_id(WCD_archive)
-            if a_id in wcd_archive_map:
-                WCD_archive = wcd_archive_map[archive_id(a_id)]
-                fname = os.path.join(audio_dir, WCD_archive, WCD_path)
-                # Now try again
-        if not os.path.isfile(fname):
-            # No, have to try and download
-            # Build a list of values for "ia"
-                #iacmd = ["ia", "download", WCD_archive, WCD_path]
-            iacmd = ["/home/dpwe/MSD_WCD_match/ia_download", "download", WCD_archive, WCD_path]
-                # Ignore any errors coming out of ia
-            try:
-                rcode = subprocess.check_call(iacmd, cwd=audio_dir)
-            except:
-                print "*** error running "+" ".join(iacmd)
-        # Is it there now?
-        if not os.path.isfile(fname):
-            # WCD fnames contain weird non-ascii UTF-8 chars which print will reject (as does ia often)
-            fname_uni = unicode(fname, encoding='utf-8')
-            print trid+"->"+fname_uni+" not found"
-            # Act like we never knew it
-            fname = None
-
+        fname = IA_audio_file(WCD_archive, WCD_path)
     return fname
 
 # Initialization
