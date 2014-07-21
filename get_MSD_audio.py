@@ -38,7 +38,7 @@ def build_msd_dict(lookupfile, dt_thresh=2.0):
     return new_msd_dict
 
 # Retrieve a file given IA names
-def IA_audio_file(WCD_archive, WCD_path):
+def IA_audio_file(WCD_archive, WCD_path=''):
     """Return path to audio file corresponding to WCD item.  Will download it from archive if file not found locally.
 
     :parameters:
@@ -46,7 +46,8 @@ def IA_audio_file(WCD_archive, WCD_path):
           name of the archive containing desired track
 
       - WCD_path : string
-          path to the file within the archive
+          path to the file within the archive.  If empty, recovered from 
+          WCD_archive using os.path.split
 
     :returns:
       - fname : string
@@ -55,9 +56,14 @@ def IA_audio_file(WCD_archive, WCD_path):
     :note:
       Uses global ``audio_dir`` as root to download files into.
     """
-    # Strip leading path off WCD_archive, we don't use it
     arc_parts = WCD_archive.split('/')
-    WCD_archive = arc_parts[-1]
+    if len(WCD_path) == 0:
+        # assume we were passed IA as a single archive/path/to/file composite
+        WCD_archive = arc_parts[0]
+        WCD_path = '/'.join(arc_parts[1:])
+    else:
+        # Strip leading path off WCD_archive, we don't use it
+        WCD_archive = arc_parts[-1]
     # Full target path
     fname = os.path.join(audio_dir, WCD_archive, WCD_path)
     # Does it exist?
@@ -87,6 +93,35 @@ def IA_audio_file(WCD_archive, WCD_path):
         fname = None
 
     return fname
+
+def remove_audio(fname):
+    """ Cleanup a file previously returned by IA_audio_file - remove the file and its directory """
+    if fname[:len(audio_dir)] == audio_dir:
+        if os.path.isfile(fname):
+            ok = True
+            try:
+                print "removing",fname
+                os.remove(fname)
+            except OSError as ex:
+                ok = False
+                print "Error removing",fname
+            head, tail = os.path.split(fname)
+            while ok and len(head) > 0 and head != audio_dir and os.path.isdir(head):
+                # and os.path.dirisempty(head):
+                try:
+                    print "rmdiring",head
+                    os.rmdir(head)
+                except OSError as ex:
+                    ok = False
+                    print "Error rmdiring", head
+                    #if ex.errno == errno.ENOTEMPTY:
+                    #    print "directory not empty"
+                head, tail = os.path.split(head)
+        else:
+            print fname,"not found"
+    else:
+        print fname,"not a child of",audio_dir
+
 
 # Retrieve a file given MSD tkid
 def MSD_audio_file(trid):
